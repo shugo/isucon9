@@ -6,6 +6,7 @@ CREATE INDEX index_shippings_on_reserve_id ON shippings(reserve_id);
 CREATE INDEX index_items_on_seller_id ON items(seller_id);
 CREATE INDEX index_items_on_buyer_id ON items(buyer_id);
 CREATE INDEX index_items_on_category_id ON items(category_id);
+CREATE INDEX index_items_on_created_at ON items(created_at);
 
 CREATE INDEX index_transaction_evidences_on_seller_id ON transaction_evidences(seller_id);
 CREATE INDEX index_transaction_evidences_on_buyer_id ON transaction_evidences(buyer_id);
