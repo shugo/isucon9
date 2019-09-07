@@ -345,7 +345,7 @@ module Isucari
             'account_name' => item['buyer_account_name'],
             'num_sell_items' => item['buyer_num_sell_items']
           }
-          item_detail['buyey'] = buyer
+          item_detail['buyer'] = buyer
         end
 
         transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ?', item['id']).first
