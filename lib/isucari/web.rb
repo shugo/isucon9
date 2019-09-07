@@ -293,7 +293,7 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         # paging
         begin
-          db.xquery("SELECT items.*, sellers.account_name AS seller_account_name, sellers.num_sell_items AS seller_num_sell_items, buyers.account_name AS buyer_account_name, buyers.num_sell_items AS buyer_num_sell_items FROM `items` JOIN users AS sellers ON items.seller_id = sellers.id LEFT OUT JOIN users AS buyers ON items.buyer_id = buyers.id WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) AND (items.`created_at` < ?  OR (items.`created_at` <= ? AND items.`id` < ?)) ORDER BY items.`created_at` DESC, items.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP, Time.at(created_at), Time.at(created_at), item_id)
+          db.xquery("SELECT items.*, sellers.account_name AS seller_account_name, sellers.num_sell_items AS seller_num_sell_items, buyers.account_name AS buyer_account_name, buyers.num_sell_items AS buyer_num_sell_items FROM `items` JOIN users AS sellers ON items.seller_id = sellers.id LEFT OUTER JOIN users AS buyers ON items.buyer_id = buyers.id WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) AND (items.`created_at` < ?  OR (items.`created_at` <= ? AND items.`id` < ?)) ORDER BY items.`created_at` DESC, items.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP, Time.at(created_at), Time.at(created_at), item_id)
         rescue
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
@@ -301,7 +301,7 @@ module Isucari
       else
         # 1st page
         begin
-          db.xquery("SELECT items.*, sellers.account_name AS seller_account_name, sellers.num_sell_items AS seller_num_sell_items, buyers.account_name AS buyer_account_name, buyers.num_sell_items AS buyer_num_sell_items FROM `items` JOIN users AS sellers ON items.seller_id = sellers.id LEFT OUT JOIN users AS buyers ON items.buyer_id = buyers.id WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) ORDER BY items.`created_at` DESC, items.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP)
+          db.xquery("SELECT items.*, sellers.account_name AS seller_account_name, sellers.num_sell_items AS seller_num_sell_items, buyers.account_name AS buyer_account_name, buyers.num_sell_items AS buyer_num_sell_items FROM `items` JOIN users AS sellers ON items.seller_id = sellers.id LEFT OUTER JOIN users AS buyers ON items.buyer_id = buyers.id WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) ORDER BY items.`created_at` DESC, items.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP)
         rescue
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
