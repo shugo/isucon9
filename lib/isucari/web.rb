@@ -98,7 +98,11 @@ module Isucari
         }
       end
 
+      CATEGORY_CACHE = {}
+
       def get_category_by_id(category_id)
+        cache = CATEGORY_CACHE[category_id]
+        return cache if cache
         category = db.xquery('SELECT * FROM `categories` WHERE `id` = ?', category_id).first
 
         return if category.nil?
@@ -111,7 +115,7 @@ module Isucari
           parent_category['category_name']
         end
 
-        {
+        CATEGORY_CACHE[category_id] = {
           'id' => category['id'],
           'parent_id' => category['parent_id'],
           'category_name' => category['category_name'],
