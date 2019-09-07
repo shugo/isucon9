@@ -8,6 +8,14 @@ require 'isucari/api'
 
 module Isucari
   class Web < Sinatra::Base
+
+    # yhara
+    #configure :development, :production do
+    #  logger = Logger.new(File.open("#{root}/log/#{environment}.log", 'a'))
+    #  logger.level = Logger::DEBUG if development?
+    #   use Rack::CommonLogger, logger
+    #end
+
     DEFAULT_PAYMENT_SERVICE_URL = 'http://localhost:5555'
     DEFAULT_SHIPMENT_SERVICE_URL = 'http://localhost:7000'
 
