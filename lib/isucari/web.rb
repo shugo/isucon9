@@ -98,7 +98,11 @@ module Isucari
         }
       end
 
+      CATEGORY_CACHE = {}
+
       def get_category_by_id(category_id)
+        cache = CATEGORY_CACHE[category_id]
+        return cache if cache
         category = db.xquery('SELECT * FROM `categories` WHERE `id` = ?', category_id).first
 
         return if category.nil?
@@ -111,7 +115,7 @@ module Isucari
           parent_category['category_name']
         end
 
-        {
+        CATEGORY_CACHE[category_id] = {
           'id' => category['id'],
           'parent_id' => category['parent_id'],
           'category_name' => category['category_name'],
@@ -289,7 +293,7 @@ module Isucari
       items = if item_id > 0 && created_at > 0
         # paging
         begin
-          db.xquery("SELECT * FROM `items` WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) AND (`created_at` < ?  OR (`created_at` <= ? AND `id` < ?)) ORDER BY `created_at` DESC, `id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP, Time.at(created_at), Time.at(created_at), item_id)
+          db.xquery("SELECT items.*, users.account_name, users.num_sell_items FROM `items` JOIN users ON items.seller_id = users.id WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) AND (items.`created_at` < ?  OR (items.`created_at` <= ? AND items.`id` < ?)) ORDER BY items.`created_at` DESC, items.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP, Time.at(created_at), Time.at(created_at), item_id)
         rescue
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
@@ -297,7 +301,7 @@ module Isucari
       else
         # 1st page
         begin
-          db.xquery("SELECT * FROM `items` WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) ORDER BY `created_at` DESC, `id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP)
+          db.xquery("SELECT items.*, users.account_name, users.num_sell_items FROM `items` JOIN users ON items.seller_id = users.id WHERE (`seller_id` = ? OR `buyer_id` = ?) AND `status` IN (?, ?, ?, ?, ?) ORDER BY items.`created_at` DESC, items.`id` DESC LIMIT #{TRANSACTIONS_PER_PAGE + 1}", user['id'], user['id'], ITEM_STATUS_ON_SALE, ITEM_STATUS_TRADING, ITEM_STATUS_SOLD_OUT, ITEM_STATUS_CANCEL, ITEM_STATUS_STOP)
         rescue
           db.query('ROLLBACK')
           halt_with_error 500, 'db error'
@@ -305,12 +309,6 @@ module Isucari
       end
 
       item_details = items.map do |item|
-        seller = get_user_simple_by_id(item['seller_id'])
-        if seller.nil?
-          db.query('ROLLBACK')
-          halt_with_error 404, 'seller not found'
-        end
-
         category = get_category_by_id(item['category_id'])
         if category.nil?
           db.query('ROLLBACK')
@@ -320,7 +318,11 @@ module Isucari
         item_detail = {
           'id' => item['id'],
           'seller_id' => item['seller_id'],
-          'seller' => seller,
+          'seller' => {
+            'id' => item['seller_id'],
+            'account_name' => item['account_name'],
+            'num_sell_items' => item['num_sell_items']
+          },
           # buyer_id
           # buyer
           'status' => item['status'],
