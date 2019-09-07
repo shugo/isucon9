@@ -348,16 +348,19 @@ module Isucari
           item_detail['buyer'] = buyer
         end
 
-        transaction_evidence = db.xquery('SELECT * FROM `transaction_evidences` WHERE `item_id` = ?', item['id']).first
+        transaction_evidence = db.xquery('SELECT transaction_evidences.*, shippings.reserve_id AS shipping_reserve_id FROM `transaction_evidences` LEFT OUTER JOIN shippings ON transaction_evidences.id = shippings.transaction_evidence_id WHERE transaction_evidences.`item_id` = ?', item['id']).first
         unless transaction_evidence.nil?
-          shipping = db.xquery('SELECT * FROM `shippings` WHERE `transaction_evidence_id` = ?', transaction_evidence['id']).first
-          if shipping.nil?
+          if transaction_evidence['shipping_reserve_id'].nil?
             db.query('ROLLBACK')
             halt_with_error 404, 'shipping not found'
           end
 
           ssr = begin
-            api_client.shipment_status(get_shipment_service_url, 'reserve_id' => shipping['reserve_id'])
+            if transaction_evidence['status'] == 'done'
+              {'status' => 'done'}
+            else
+              api_client.shipment_status(get_shipment_service_url, 'reserve_id' => transaction_evidence['shipping_reserve_id'])
+            end
           rescue
             db.query('ROLLBACK')
             halt_with_error 500, 'failed to request to shipment service'
