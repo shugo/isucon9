@@ -9,12 +9,15 @@ require 'isucari/api'
 module Isucari
   class Web < Sinatra::Base
 
-    # yhara
-    #configure :development, :production do
-    #  logger = Logger.new(File.open("#{root}/log/#{environment}.log", 'a'))
-    #  logger.level = Logger::DEBUG if development?
-    #   use Rack::CommonLogger, logger
-    #end
+    require 'sinatra/custom_logger'
+    require 'logger'
+    helpers Sinatra::CustomLogger
+    configure :development, :production do
+      logger = Logger.new(File.open("#{__dir__}/../../log/#{environment}.log", 'a'))
+      logger.level = Logger::DEBUG if development?
+      set :logger, logger
+      use Rack::CommonLogger, logger
+    end
 
     DEFAULT_PAYMENT_SERVICE_URL = 'http://localhost:5555'
     DEFAULT_SHIPMENT_SERVICE_URL = 'http://localhost:7000'
@@ -148,6 +151,9 @@ module Isucari
       end
 
       def halt_with_error(status = 500, error = 'unknown')
+        logger.error("#{status} #{request.path}: #{error} (#{$!.class}: #{$!.message})")
+        $!.backtrace.each{|x| logger.error(x)}
+
         halt status, { 'error' => error }.to_json
       end
     end
